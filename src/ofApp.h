@@ -5,6 +5,7 @@
 #include "ofxTrueTypeFontUC.h"
 #include "ofxXmlSettings.h"
 #include "FrameTimer.h"
+#include "PPoem.h"
 
 #define PORT 12345
 
@@ -35,14 +36,15 @@ class ofApp : public ofBaseApp{
 		ofImage _img_logo;
 		ofxOscReceiver _receiver;
 
-		vector<string> _poem;
+		/*vector<string> _poem;
    		vector<FrameTimer> _timer_poem;
-		vector<float> _poem_size;
-		vector<float> _poem_offset;
+		vector<float> _poem_scale;
+		vector<ofVec2f> _poem_offset;
+		vector<float> _line_height;*/
+		list<PPoem> _poem;
 
 		string _poem_str;
 
-		ofxTrueTypeFontUC _font;
 
 		string cvtstr(const string& str);
 

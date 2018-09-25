@@ -26,7 +26,8 @@ void main()
 	color += 0.005977 * texture2D(imgSample, texCoordVarying + vec2(0.0, blurAmnt * -3.0));
 	color += 0.000229 * texture2D(imgSample, texCoordVarying + vec2(0.0, blurAmnt * -4.0));
 	
-//    color /= 25.0;
+	//color /= 25.0;
+		
     
-    gl_FragColor = color;
+    	gl_FragColor = color;
 }

@@ -2,6 +2,7 @@
 
 
 ofColor ofApp::MainColor[5]={ofColor(249,0,161),ofColor(255,115,0),ofColor(255,224,0),ofColor(22,226,5),ofColor(0,55,255)};
+ofxTrueTypeFontUC PPoem::PoemFont;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -10,7 +11,7 @@ void ofApp::setup(){
 	_receiver.setup(PORT);
 
 	_img_logo.load("muse.png");
-	_font.loadFont("NotoSansCJKtc-Regular.otf",200,true,true);
+	PPoem::PoemFont.loadFont("NotoSansCJKtc-Regular.otf",200,true,true);
 
 	_last_millis=ofGetElapsedTimeMillis();
 	_dmillis=0;
@@ -23,7 +24,8 @@ void ofApp::setup(){
 	//_postfx.createPass<BloomPass>()->setEnabled(true);
 	
 	_shader_blurx.load("shadersES2/shaderBlurX");
-	_shader_blury.load("shadersES2/shaderBlurY");
+	
+	//_shader_blury.load("shadersES2/shaderBlurY");
 	_shader_glitch.load("shadersES2/glitch");
 	
 	_fbo_tmp.allocate(ofGetWidth(),ofGetHeight());
@@ -43,7 +45,7 @@ void ofApp::update(){
 			_timer_blink.update(_dmillis);
 			break;
 		case POEM:
-			for(auto& t:_timer_poem) t.update(_dmillis);
+			for(auto& t:_poem) t.update(_dmillis);
 
 			_timer_display.update(_dmillis);
 			_timer_fade.update(_dmillis);
@@ -65,50 +67,40 @@ void ofApp::draw(){
 	_fbo_tmp.begin();
 	ofClear(0);
 	//ofSetBackgroundColor(0);
-/*	_shader_glitch.begin();
-	_shader_glitch.setUniform1f("amount",5);
-	_shader_glitch.setUniform1f("angle",TWO_PI*sin(ofGetFrameNum()%30/30.0));
-	_shader_glitch.setUniform1f("windowWidth",ofGetWidth());
-	_shader_glitch.setUniform1f("windowHeight",ofGetHeight());
-	_shader_glitch.setUniformTexture("tex0",_fbo1.getTexture(),0);
-*/	if(_mode==DisplayMode::POEM){
-		int len=_poem.size();
-		int h_=0;
-		float hei_=_font.getLineHeight();
-		for(int i=0;i<len;++i){
-			ofPushStyle();
-			ofSetColor(255,255*_timer_poem[i].val()*(1-_timer_fade.val()));
 
-			ofPushMatrix();
-			ofTranslate(_poem_offset[i],h_);
-			ofScale(_poem_size[i]/hei_,_poem_size[i]/hei_);
-				_font.drawStringAsShapes(_poem[i],0,hei_);
-			ofPopMatrix();
-
-			ofPopStyle();
-
-			h_+=_poem_size[i];
+	if(_mode==DisplayMode::POEM){
+		//int len=_poem.size();
+		float fadea_=1-_timer_fade.val();
+		for(auto& p:_poem){
+			p.draw(fadea_);
 		}
 
 	}else{
-		/*for(int i=0;i<100;++i){
-			ofSetColor(ofRandom(255),255,255);
-			ofDrawCircle(ofRandom(ofGetWidth()),ofRandom(ofGetHeight()),20);
-		}
-		_img_logo.draw(0,0,ofGetWidth(),ofGetHeight());*/
-	}
-//	_shader_glitch.end();
 
+	}
 	_fbo_tmp.end();
-	
+
+	_fbo1.begin();
+	ofClear(0);
+	_shader_glitch.begin();
+	_shader_glitch.setUniform1f("amount",3);
+	_shader_glitch.setUniform1f("phi",ofRandom(-100,100));
+	_shader_glitch.setUniform1f("angle",PI*sin(ofGetFrameNum()%40/40+((ofRandom(20)<1)?0:ofRandom(-10,10))));
+	_shader_glitch.setUniform1f("windowWidth",ofGetWidth());
+	_shader_glitch.setUniform1f("windowHeight",ofGetHeight());
+	_shader_glitch.setUniformTexture("tex0",_fbo_tmp.getTexture(),0);
+		_fbo_tmp.draw(0,0);
+	_shader_glitch.end();
+	_fbo1.end();
+
 	_fbo2.begin();
 	ofClear(0);
 		_shader_blurx.begin();
 		//_shader_blurx.setUniform1f("blurAmnt",blur_/(float)ofGetHeight());
 		_shader_blurx.setUniform1f("windowWidth",ofGetWidth());
 		_shader_blurx.setUniform1f("windowHeight",ofGetHeight());
-		_shader_blurx.setUniformTexture("tex0",_fbo_tmp.getTexture(),0);
-			_fbo_tmp.draw(0,0);
+		_shader_blurx.setUniformTexture("tex0",_fbo1.getTexture(),0);
+			_fbo1.draw(0,0);
 		_shader_blurx.end();
 	_fbo2.end();
 	_fbo1.begin();
@@ -121,7 +113,7 @@ void ofApp::draw(){
 			_fbo2.draw(0,0);
 		_shader_blurx.end();
 	_fbo1.end();
-	_fbo2.begin();
+/*	_fbo2.begin();
 	ofClear(0);
 		_shader_blurx.begin();
 		//_shader_blurx.setUniform1f("blurAmnt",blur_/(float)ofGetHeight());
@@ -137,20 +129,16 @@ void ofApp::draw(){
 			_fbo2.draw(0,0);
 		_shader_blurx.end();
 	_fbo1.end();
-	
+*/	
 
 		
-	_shader_glitch.begin();
-	_shader_glitch.setUniform1f("amount",3);
-	_shader_glitch.setUniform1f("angle",TWO_PI*sin(ofGetFrameNum()%120/120.0+ofRandom(-2,2)));
-	_shader_glitch.setUniform1f("windowWidth",ofGetWidth());
-	_shader_glitch.setUniform1f("windowHeight",ofGetHeight());
-	_shader_glitch.setUniformTexture("tex0",_fbo1.getTexture(),0);
 	_fbo1.draw(0,0);
-	//_fbo_tmp.draw(0,0);
-	_shader_glitch.end();
-
+//	_fbo_tmp.draw(0,0,ofGetWidth()/4,ofGetHeight()/4);
+//	_fbo2.draw(0,ofGetHeight()/4,ofGetWidth()/4,ofGetHeight()/4);
+	
 	ofDrawBitmapString(ofToString(ofGetFrameRate()),0,20);
+	ofDrawBitmapString(ofToString(_timer_fade.val()),0,40);
+
 }
 
 void ofApp::updateOsc(){
@@ -163,15 +151,15 @@ void ofApp::updateOsc(){
 		if(m.getAddress() == "/poem"){
 
 			_poem.clear();
-			_timer_poem.clear();
-			_poem_size.clear();
+			auto b=m.getArgAsBlob(0);
+			//_poem_str=m.getArgAsString(0);
+			_poem_str=string(b.getData());
 
-			_poem_str=m.getArgAsString(0);
 			int delay_=m.getArgAsInt(1);
 			int show_=m.getArgAsInt(2);
 	
 
-			auto p_=ofSplitString(_poem_str,"/");
+			auto p_=ofSplitString(_poem_str,"|");
 			int len=p_.size();
 			ofLog()<<"len=  "<<len;
 			if(len<1) continue;
@@ -184,24 +172,17 @@ void ofApp::updateOsc(){
 
 			for(int i=0;i<len;++i){
 
-				auto rec_=_font.getStringBoundingBox(p_[i],0,0);
-				float hei_=w/rec_.width*rec_.height;
-
-				float d_=ofRandom(-.2,.2)*inter_;
+				float hei=(i==len-1)?ofGetHeight()-h:ofRandom(.5,1.3)*ofGetHeight()/len;
+				float d_=ofRandom(.2)*inter_;
 				float in_=min(ofRandom(.7,1.5)*inter_,show_-t);
 
-				float line_=(i==len-1)?ofGetHeight()-h:ofRandom(.5,1.2)*hei_;				
-				
-				_poem.push_back(p_[i]);
-				_timer_poem.push_back(FrameTimer(in_,delay_+t+d_));
-				_poem_size.push_back(line_);
-				
-				float s_=line_/rec_.height*rec_.width;
-				_poem_offset.push_back(ofRandom(-0.5*line_,w-s_+0.5*line_));
-				//ofLog()<<in_<<" "<<delay_+t+d_<<" "<<line_;
+
+				_poem.push_back(PPoem(p_[i],h,hei,delay_+t+d_,in_));
+				//_poem.push_back(PPoem(p_[i],ofGetHeight()/len*i,ofGetHeight()/len,0,1000));
+
 
 				t+=in_+d_;
-				h+=line_;
+				h+=hei;
 			}
 			_timer_display=FrameTimer(t,delay_);
 			_timer_fade=FrameTimer(5000,show_*.5+t+delay_);
@@ -222,7 +203,7 @@ void ofApp::setMode(DisplayMode set_){
 		case POEM:
 			_timer_display.restart();
 			_timer_fade.restart();
-			for(auto& t:_timer_poem) t.restart();
+			for(auto& t:_poem) t.restart();
 			break;
 	}
 
