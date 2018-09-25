@@ -65,4 +65,8 @@ class ofApp : public ofBaseApp{
 		//ofEasyCam _camera;
 		ofShader _shader_blurx,_shader_blury,_shader_glitch;
 		ofFbo _fbo1,_fbo2,_fbo_tmp;
+
+		int _color_glitch1,_color_glitch2;
+		void randomGlitch();
+
 };

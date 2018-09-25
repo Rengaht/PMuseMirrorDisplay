@@ -8,6 +8,8 @@ uniform float angle;
 uniform float windowWidth;
 uniform float windowHeight;
 uniform float phi;
+uniform vec3 glitchColor1;
+uniform vec3 glitchColor2;
 
 varying vec2 texCoordVarying;
 
@@ -61,7 +63,11 @@ void main()
 	vec4 cr=texture2D(tex0,texCoordVarying+dir+offset*.1);
 	vec4 cga=texture2D(tex0,texCoordVarying+offset);
 	vec4 cb=texture2D(tex0,texCoordVarying-dir+offset*.1);
-
+	
+	//vec3 g1=glitchColor1*cr.r;
+	//vec3 g2=glitchColor2*cb.b;
 
     	gl_FragColor = vec4(cr.r,cga.g,cb.b,1.0);
+
+	//gl_FragColor=vec4(g1+g2+cga.rgb,1.0);
 }

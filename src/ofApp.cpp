@@ -6,6 +6,8 @@ ofxTrueTypeFontUC PPoem::PoemFont;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+	
+	ofSetWindowShape(1280,720);
 
 	cout<<"listening for osc messages on port "<<PORT<<"\n";
 	_receiver.setup(PORT);
@@ -89,6 +91,8 @@ void ofApp::draw(){
 	_shader_glitch.setUniform1f("windowWidth",ofGetWidth());
 	_shader_glitch.setUniform1f("windowHeight",ofGetHeight());
 	_shader_glitch.setUniformTexture("tex0",_fbo_tmp.getTexture(),0);
+	_shader_glitch.setUniform3f("glitchColor1",MainColor[_color_glitch1].r,MainColor[_color_glitch1].g,MainColor[_color_glitch1].b);
+	_shader_glitch.setUniform3f("glitchColor2",MainColor[_color_glitch2].r,MainColor[_color_glitch2].g,MainColor[_color_glitch2].b);
 		_fbo_tmp.draw(0,0);
 	_shader_glitch.end();
 	_fbo1.end();
@@ -156,16 +160,20 @@ void ofApp::updateOsc(){
 			_poem_str=string(b.getData());
 
 			int delay_=m.getArgAsInt(1);
-			int show_=m.getArgAsInt(2);
-	
+			int fadein_=m.getArgAsInt(2);
+			int show_=m.getArgAsInt(3);
+			int fadeout_=m.getArgAsInt(4);
+
+			_color_glitch1=m.getArgAsInt(5);
+			_color_glitch2=m.getArgAsInt(6);
 
 			auto p_=ofSplitString(_poem_str,"|");
-			int len=p_.size();
+			int len=p_.size()-1;
 			ofLog()<<"len=  "<<len;
 			if(len<1) continue;
 
 			float t=0;
-			float inter_=show_*.5/len;	
+			float inter_=fadein_/len;
 			float h=0;
 			//float hei_=ofGetHeight()/len;
 			float w=ofGetWidth();
@@ -173,21 +181,22 @@ void ofApp::updateOsc(){
 			for(int i=0;i<len;++i){
 
 				float hei=(i==len-1)?ofGetHeight()-h:ofRandom(.5,1.3)*ofGetHeight()/len;
-				float d_=ofRandom(.2)*inter_;
-				float in_=min(ofRandom(.7,1.5)*inter_,show_-t);
+				float d_=ofRandom(-.2,.2)*inter_;
+				float in_=min(ofRandom(.7,1.5)*inter_,fadein_-t);
 
-
-				_poem.push_back(PPoem(p_[i],h,hei,delay_+t+d_,in_));
+				float dd_=ofClamp(t+d_,0,fadein_);
+				_poem.push_back(PPoem(p_[i],h,hei,delay_+dd_,in_));
 				//_poem.push_back(PPoem(p_[i],ofGetHeight()/len*i,ofGetHeight()/len,0,1000));
 
 
 				t+=in_+d_;
 				h+=hei;
 			}
-			_timer_display=FrameTimer(t,delay_);
-			_timer_fade=FrameTimer(5000,show_*.5+t+delay_);
+			//_timer_display=FrameTimer(t,delay_+fadein_);
+			_timer_fade=FrameTimer(fadeout_,show_+fadein_+delay_);
 
-			ofLog()<<"get poem: "<<delay_<<" "<<show_;
+
+			ofLog()<<"get poem: "<<delay_<<" "<<fadein_<<" "<<show_<<" "<<fadeout_;
 			setMode(DisplayMode::POEM); 
 		}
 	}
@@ -209,6 +218,10 @@ void ofApp::setMode(DisplayMode set_){
 
 }
 
+void ofApp::randomGlitch(){
+	_color_glitch1=floor(ofRandom(5));
+	_color_glitch2=fmod(_color_glitch1+floor(ofRandom(4)),5);
+}
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
