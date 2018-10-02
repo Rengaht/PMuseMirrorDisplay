@@ -8,6 +8,9 @@ ofxTrueTypeFontUC PPoem::PoemFont;
 void ofApp::setup(){
 	
 	ofSetWindowShape(1280,720);
+	ofHideCursor();
+
+	loadXmlSetting();
 
 	cout<<"listening for osc messages on port "<<PORT<<"\n";
 	_receiver.setup(PORT);
@@ -208,6 +211,7 @@ void ofApp::setMode(DisplayMode set_){
 	switch(_mode){
 		case SLEEP:
 			_timer_blink.restart();
+			sendReset();
 			break;
 		case POEM:
 			_timer_display.restart();
@@ -225,57 +229,39 @@ void ofApp::randomGlitch(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
+	switch(key){
+		case 'r':
+		case 'R':
+			setMode(DisplayMode::SLEEP);
+			break;
+	}
 }
 
-//--------------------------------------------------------------
-void ofApp::keyReleased(int key){
-
+void ofApp::loadXmlSetting(){
+	ofxXmlSettings param_;
+	param_.loadFile("Pdata.xml");
+	_str_ip.push_back(param_.getValue("IP_FACE",""));
+	_str_ip.push_back(param_.getValue("IP_POEM",""));
+	_str_ip.push_back(param_.getValue("IP_DISPLAY1",""));
+	_str_ip.push_back(param_.getValue("IP_DISPLAY2",""));
+	_str_ip.push_back(param_.getValue("IP_DISPLAY3",""));
+	_index_display=param_.getValue("INDEX_DISPLAY",0);
 }
 
-//--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y ){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseEntered(int x, int y){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseExited(int x, int y){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::windowResized(int w, int h){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
-
+void ofApp::sendReset(){
+	
+	if(_index_display>0) return;
+	
+	ofLog()<<"send reset!";
+	for(int i=0;i<2;++i){
+		ofxOscSender sender;
+		sender.setup(_str_ip[0],PORT);
+	
+		ofxOscMessage message;
+		message.setAddress("/reset");
+		message.addIntArg(_index_display);
+		sender.sendMessage(message);
+	}
 }
 
 //string ofApp::ws2s(const wstring& wstr){
